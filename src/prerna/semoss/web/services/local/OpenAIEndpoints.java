@@ -194,6 +194,13 @@ public class OpenAIEndpoints {
 		} else {
 			insight = InsightStore.getInstance().get(insightId);
 			// maybe its an insight id from another session
+		}
+
+		if (insight != null && !ModelPixelExecutor.userCanAccessInsight(user, session, insight)) {
+			return ModelPixelExecutor.errorResponse(403, "User does not have access to this insight");
+		}
+
+		if (insight != null) {
 			InsightStore.getInstance().addToSessionHash(SESSION_ID, insightId);
 		}
 
@@ -354,6 +361,14 @@ public class OpenAIEndpoints {
 			}
 		} else {
 			insight = InsightStore.getInstance().get(insightId);
+		}
+
+		if (insight != null && !ModelPixelExecutor.userCanAccessInsight(user, session, insight)) {
+			return ModelPixelExecutor.errorResponse(403, "User does not have access to this insight");
+		}
+
+		if (insight != null) {
+			InsightStore.getInstance().addToSessionHash(SESSION_ID, insightId);
 		}
 
 		if (insight == null) {
@@ -529,6 +544,13 @@ public class OpenAIEndpoints {
 			}
 		} else {
 			insight = InsightStore.getInstance().get(insightId);
+		}
+
+		if (insight != null && !ModelPixelExecutor.userCanAccessInsight(user, session, insight)) {
+			return ModelPixelExecutor.errorResponse(403, "User does not have access to this insight");
+		}
+
+		if (insight != null) {
 			InsightStore.getInstance().addToSessionHash(SESSION_ID, insightId);
 		}
 
@@ -697,6 +719,13 @@ public class OpenAIEndpoints {
 		} else {
 			insight = InsightStore.getInstance().get(insightId);
 			// maybe its an insight id from another session
+		}
+
+		if (insight != null && !ModelPixelExecutor.userCanAccessInsight(user, session, insight)) {
+			return ModelPixelExecutor.errorResponse(403, "User does not have access to this insight");
+		}
+
+		if (insight != null) {
 			InsightStore.getInstance().addToSessionHash(SESSION_ID, insightId);
 		}
 
@@ -933,6 +962,13 @@ public class OpenAIEndpoints {
 		} else {
 			insight = InsightStore.getInstance().get(insightId);
 			// maybe its an insight id from another session
+		}
+
+		if (insight != null && !ModelPixelExecutor.userCanAccessInsight(user, session, insight)) {
+			return ModelPixelExecutor.errorResponse(403, "User does not have access to this insight");
+		}
+
+		if (insight != null) {
 			InsightStore.getInstance().addToSessionHash(SESSION_ID, insightId);
 		}
 
