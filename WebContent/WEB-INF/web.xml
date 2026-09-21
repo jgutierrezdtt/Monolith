@@ -485,23 +485,12 @@
    -->
    <!-- End Waffle -->
    
-   <!-- Allow Token Filter -->
-   <filter>
-      <filter-name>NoUserInSessionTrustedTokenFilter</filter-name>
-      <filter-class>prerna.web.conf.NoUserInSessionTrustedTokenFilter</filter-class>
-	  <init-param>
-			<param-name>trustedTokenPrefix</param-name>
-			<param-value>sencha</param-value>
-	  </init-param>
-	  <init-param>
-			<param-name>trustedTokenDomain</param-name>
-			<param-value>*</param-value>
-	  </init-param>
-   </filter>
-   <filter-mapping>
-      <filter-name>NoUserInSessionTrustedTokenFilter</filter-name>
-      <url-pattern>/api/*</url-pattern>
-   </filter-mapping>
+   <!--
+      Disabled by default: NoUserInSessionTrustedTokenFilter creates an
+      authenticated session from the user-controlled `sencha` query parameter.
+      Re-enable only after replacing it with a signed, short-lived token
+      verifier. A wildcard trustedTokenDomain is never safe for authentication.
+   -->
    <!-- This is the main filter for security -->
    <filter>
       <filter-name>NoUserInSessionFilter</filter-name>
