@@ -1,4 +1,7 @@
-FROM quay.io/semoss/semoss-dev:6.0.0-SNAPSHOT-ubuntu22-latest
+# Base image is configurable so local and CI builds can pin the Semoss image
+# produced with the same Tomcat version as the mitigated source tree.
+ARG SEMOSS_BASE_IMAGE=quay.io/semoss/semoss-dev:6.0.0-SNAPSHOT-ubuntu22-latest
+FROM ${SEMOSS_BASE_IMAGE}
 #FROM quay.io/semoss/semoss-dev:6.0.0-SNAPSHOT-ubi8-latest
 
 USER root
