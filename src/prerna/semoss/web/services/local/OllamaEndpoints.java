@@ -147,12 +147,16 @@ public class OllamaEndpoints {
 		final String JOB_ID = GUID.v7().toUUID().toString();
 
 		Insight insight = resolveInsight(SESSION_ID, sanitize(dataMap.remove("insight_id")));
+		if (insight != null && !ModelPixelExecutor.userCanAccessInsight(user, session, insight)) {
+			return ModelPixelExecutor.errorResponse(403, "User does not have access to this insight");
+		}
 		if (insight == null) {
 			Map<String, String> errorMap = new HashMap<>();
 			errorMap.put(Constants.ERROR_MESSAGE, "Could not resolve insight context");
 			errorMap.put(ERROR_TYPE, INSIGHT_NOT_FOUND);
 			return WebUtility.getResponse(errorMap, 400);
 		}
+		InsightStore.getInstance().addToSessionHash(SESSION_ID, insight.getInsightId());
 		insight.setUser(user);
 
 		String roomId = sanitize(dataMap.remove("room_id"));
@@ -431,12 +435,16 @@ public class OllamaEndpoints {
 		final String JOB_ID = GUID.v7().toUUID().toString();
 
 		Insight insight = resolveInsight(SESSION_ID, sanitize(dataMap.remove("insight_id")));
+		if (insight != null && !ModelPixelExecutor.userCanAccessInsight(user, session, insight)) {
+			return ModelPixelExecutor.errorResponse(403, "User does not have access to this insight");
+		}
 		if (insight == null) {
 			Map<String, String> errorMap = new HashMap<>();
 			errorMap.put(Constants.ERROR_MESSAGE, "Could not resolve insight context");
 			errorMap.put(ERROR_TYPE, INSIGHT_NOT_FOUND);
 			return WebUtility.getResponse(errorMap, 400);
 		}
+		InsightStore.getInstance().addToSessionHash(SESSION_ID, insight.getInsightId());
 		insight.setUser(user);
 
 		String roomId = sanitize(dataMap.remove("room_id"));
@@ -663,12 +671,16 @@ public class OllamaEndpoints {
 		final String JOB_ID = GUID.v7().toUUID().toString();
 
 		Insight insight = resolveInsight(SESSION_ID, sanitize(dataMap.remove("insight_id")));
+		if (insight != null && !ModelPixelExecutor.userCanAccessInsight(user, session, insight)) {
+			return ModelPixelExecutor.errorResponse(403, "User does not have access to this insight");
+		}
 		if (insight == null) {
 			Map<String, String> errorMap = new HashMap<>();
 			errorMap.put(Constants.ERROR_MESSAGE, "Could not resolve insight context");
 			errorMap.put(ERROR_TYPE, INSIGHT_NOT_FOUND);
 			return WebUtility.getResponse(errorMap, 400);
 		}
+		InsightStore.getInstance().addToSessionHash(SESSION_ID, insight.getInsightId());
 		insight.setUser(user);
 		ModelPixelInvoker.initializeThreadStore(insight, SESSION_ID, JOB_ID);
 
@@ -717,7 +729,6 @@ public class OllamaEndpoints {
 			}
 		} else {
 			insight = InsightStore.getInstance().get(insightId);
-			InsightStore.getInstance().addToSessionHash(sessionId, insightId);
 		}
 		return insight;
 	}

@@ -904,8 +904,22 @@ public class ProjectResource {
 		if (projectId == null) {
 			projectId = "session";
 		}
-		// get the insight from the session
-		HttpSession session = request.getSession();
+
+		User user;
+		try {
+			user = ResourceUtility.getUser(request);
+			if (!projectId.equalsIgnoreCase("session")) {
+				canAccessProject(user, projectId);
+				if (insightId != null && !insightId.isBlank() && !insightId.equalsIgnoreCase("new")) {
+					canAccessInsight(user, projectId, insightId);
+				}
+			}
+		} catch (IllegalAccessException e) {
+			return WebUtility.getBinarySO("You are not authorized");
+		}
+
+		// get the insight from the session only after project/insight authorization
+		HttpSession session = request.getSession(false);
 		if (session == null) {
 			return WebUtility.getBinarySO("You are not authorized");
 		}

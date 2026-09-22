@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.http.HttpEntity;
@@ -113,6 +114,25 @@ public class NameServer {
 	private static final String ERROR_TYPE = "errorType";
 	private static final String INSIGHT_NOT_FOUND = "INSIGHT_NOT_FOUND";
 	private static final String EXPRESSION_NOT_FOUND = "EXPRESSION_NOT_FOUND";
+
+	/**
+	 * An in-memory insight is usable by the session that created it. Saved
+	 * insights must also pass the central project/insight permission check before
+	 * an endpoint associates them with a different session.
+	 */
+	private boolean userCanAccessInsight(User user, HttpSession session, Insight insight) {
+		if (user == null || session == null || insight == null) {
+			return false;
+		}
+
+		Set<String> sessionInsightIds = InsightStore.getInstance().getInsightIDsForSession(session.getId());
+		if (sessionInsightIds != null && sessionInsightIds.contains(insight.getInsightId())) {
+			return true;
+		}
+
+		return insight.isSavedInsight() && insight.getProjectId() != null && insight.getRdbmsId() != null
+				&& SecurityInsightUtils.userCanViewInsight(user, insight.getProjectId(), insight.getRdbmsId());
+	}
 
 	////////////////////////////////////////////////////////////////////////////////
 
@@ -222,7 +242,8 @@ public class NameServer {
 	@GET
 	@Path("/downloadFile")
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
-	public Response downloadFile(@QueryParam("insightId") String insightId, @QueryParam("fileKey") String fileKey) {
+	public Response downloadFile(@QueryParam("insightId") String insightId, @QueryParam("fileKey") String fileKey,
+			@Context HttpServletRequest request) {
 		// for "security"
 		// require the person to have both the insight id
 		// and the file id
@@ -236,6 +257,12 @@ public class NameServer {
 			Map<String, String> errorMap = new HashMap<>();
 			errorMap.put(Constants.ERROR_MESSAGE, "Could not find the insight id");
 			return WebUtility.getResponse(errorMap, 400);
+		}
+
+		HttpSession session = request.getSession(false);
+		User user = session == null ? null : (User) session.getAttribute(Constants.SESSION_USER);
+		if (!userCanAccessInsight(user, session, insight)) {
+			return WebUtility.getResponse("You are not authorized to download this file", 403);
 		}
 
 		try {
@@ -414,6 +441,11 @@ public class NameServer {
 				errorMap.put(ERROR_TYPE, INSIGHT_NOT_FOUND);
 				classLogger.error("Insight not found for insightId: {}", insightId);
 				return WebUtility.getResponse(errorMap, 400);
+			}
+			if (!userCanAccessInsight(user, session, insight)) {
+				Map<String, String> errorMap = new HashMap<>();
+				errorMap.put(Constants.ERROR_MESSAGE, "User does not have access to this insight");
+				return WebUtility.getResponse(errorMap, 403);
 			}
 		}
 		InsightStore.getInstance().addToSessionHash(sessionId, insightId);
@@ -599,6 +631,11 @@ public class NameServer {
 				classLogger.error("Insight not found for insightId: {}", insightId);
 				return WebUtility.getResponse(errorMap, 400);
 			}
+			if (!userCanAccessInsight(user, session, insight)) {
+				Map<String, String> errorMap = new HashMap<>();
+				errorMap.put(Constants.ERROR_MESSAGE, "User does not have access to this insight");
+				return WebUtility.getResponse(errorMap, 403);
+			}
 		}
 		InsightStore.getInstance().addToSessionHash(sessionId, insightId);
 		insight.setUser(user);
@@ -759,6 +796,15 @@ public class NameServer {
 				errorMap.put(ERROR_TYPE, INSIGHT_NOT_FOUND);
 				classLogger.error("Insight not found for insightId: {}", insightId);
 				return WebUtility.getResponse(errorMap, 400);
+			}
+			if (!userCanAccessInsight(user, session, insight)) {
+				response.put("id", "null");
+				response.put("jsonrpc", "2.0");
+				JSONObject error = new JSONObject();
+				error.put("code", MCPErrorCode.RESOURCE_ACCESS_DENIED.getCode());
+				error.put("message", "User does not have access to this insight");
+				response.put("error", error);
+				return Response.status(403).entity(response.toString()).build();
 			}
 		}
 		InsightStore.getInstance().addToSessionHash(sessionId, insightId);

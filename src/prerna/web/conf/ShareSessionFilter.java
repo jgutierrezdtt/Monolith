@@ -91,9 +91,9 @@ public class ShareSessionFilter implements Filter {
 				try {
 					Object[] shareDetails = SecurityShareSessionUtils.getShareSessionDetails(shareToken);
 					if (shareDetails == null) {
-						classLogger.info(
-								"User is trying to login through a share token but the token '{}' doesn't exist",
-								shareToken);
+						classLogger.info("User is trying to login through a share token that does not exist");
+						arg2.doFilter(arg0, arg1);
+						return;
 					}
 
 					boolean shareSession = (boolean) shareDetails[6];
@@ -102,8 +102,7 @@ public class ShareSessionFilter implements Filter {
 					SecurityShareSessionUtils.validateShareSessionDetails(shareDetails);
 					if (shareSession) {
 						classLogger.info(
-								"User has successfully used a share token '{}' to attempt to redirect to the session and login",
-								shareToken);
+								"User has successfully used a share token to attempt to redirect to the session and login");
 
 						String sessionId = (String) shareDetails[1];
 						String routeId = (String) shareDetails[2];
@@ -136,8 +135,7 @@ public class ShareSessionFilter implements Filter {
 							((HttpServletResponse) arg1).addCookie(c);
 						}
 					} else if (shareAuth) {
-						classLogger.info("User has successfully used a share token '{}' to for authentication",
-								shareToken);
+						classLogger.info("User has successfully used a share token for authentication");
 
 						AccessToken token = SecurityShareSessionUtils.generateAccessTokenForShareAuth(shareDetails);
 						UserResource.addAccessToken(token, req, false);
@@ -152,9 +150,8 @@ public class ShareSessionFilter implements Filter {
 								"ShareSessionFilter token is not properly set for sharing a session or authorization");
 					}
 				} catch (Exception e) {
-					classLogger.error(
-							"User is trying to login through an auth/share token but the token '{}' resulted in the error: {}",
-							shareToken, e.getMessage(), e);
+					classLogger.error("User is trying to login through an auth/share token and validation failed: {}",
+							e.getMessage(), e);
 					arg2.doFilter(arg0, arg1);
 					return;
 				}
@@ -163,8 +160,7 @@ public class ShareSessionFilter implements Filter {
 				// why do you have the share session still?
 				// i'm going to remove it
 				// and redirect you back
-				classLogger.info("User is already logged in but trying to login again using an auth/share token '{}'",
-						shareToken);
+				classLogger.info("User is already logged in but trying to login again using an auth/share token");
 				arg2.doFilter(arg0, arg1);
 				return;
 			}

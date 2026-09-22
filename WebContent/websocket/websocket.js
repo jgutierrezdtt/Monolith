@@ -10,11 +10,13 @@ function onMessage(event) {
 function displayPixelResponse(pixelResponse) {
     var content = document.getElementById("content");
     var div = document.createElement("div");
-    
-    var html = "<h3>New Pixel</h3>";
-    html += "<p>" +  JSON.stringify(pixelResponse) + "</p>";
 
-    div.innerHTML= html;
+    var heading = document.createElement("h3");
+    heading.textContent = "New Pixel";
+    var paragraph = document.createElement("p");
+    paragraph.textContent = JSON.stringify(pixelResponse);
+    div.appendChild(heading);
+    div.appendChild(paragraph);
     content.appendChild(div);
 }
 

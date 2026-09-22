@@ -30,6 +30,7 @@ package prerna.web.services.util;
 import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,9 +39,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.core.Response;
 import prerna.auth.User;
+import prerna.auth.utils.SecurityInsightUtils;
 import prerna.engine.impl.model.ModelPixelInvoker;
 import prerna.util.Constants;
 import prerna.util.Utility;
+import prerna.om.Insight;
+import prerna.om.InsightStore;
 
 /**
  * Servlet-side concerns shared by the provider-compatible web endpoints (OpenAI
@@ -97,6 +101,23 @@ public class ModelPixelExecutor {
 			return null;
 		}
 		return (User) session.getAttribute(Constants.SESSION_USER);
+	}
+
+	/**
+	 * Check that a model endpoint may associate an insight with the current
+	 * session. Insights created in this session are allowed; saved insights must
+	 * also pass the central ownership/permission check.
+	 */
+	public static boolean userCanAccessInsight(User user, HttpSession session, Insight insight) {
+		if (user == null || session == null || insight == null) {
+			return false;
+		}
+		Set<String> sessionInsightIds = InsightStore.getInstance().getInsightIDsForSession(session.getId());
+		if (sessionInsightIds != null && sessionInsightIds.contains(insight.getInsightId())) {
+			return true;
+		}
+		return insight.isSavedInsight() && insight.getProjectId() != null && insight.getRdbmsId() != null
+				&& SecurityInsightUtils.userCanViewInsight(user, insight.getProjectId(), insight.getRdbmsId());
 	}
 
 	/**

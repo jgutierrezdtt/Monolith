@@ -719,9 +719,10 @@ public final class WebUtility {
 	}
 
 	/**
-	 * Validate that {@code urlString} points to a top-private domain present in the
-	 * configured whitelist ({@link Constants#WHITE_LIST_DOMAINS}). If the whitelist
-	 * is empty/unset all URLs are accepted.
+	 * Validate that {@code urlString} points to an HTTP(S) top-private domain
+	 * present in the configured whitelist ({@link Constants#WHITE_LIST_DOMAINS}).
+	 * An empty whitelist fails closed because this method is used with
+	 * user-controlled redirect targets.
 	 *
 	 * @param urlString the URL to check
 	 * @throws IllegalArgumentException if the URL is malformed or its domain is not
@@ -730,13 +731,21 @@ public final class WebUtility {
 	public static void checkIfValidDomain(String urlString) {
 		String whiteListDomains = Utility.getDIHelperProperty(Constants.WHITE_LIST_DOMAINS);
 		if (whiteListDomains == null || (whiteListDomains = whiteListDomains.trim()).isEmpty()) {
-			return;
+			throw new IllegalStateException("Redirect domain whitelist is not configured");
 		}
 
-		List<String> domainList = Arrays.stream(whiteListDomains.split(",")).collect(Collectors.toList());
+		List<String> domainList = Arrays.stream(whiteListDomains.split(",")).map(String::trim)
+				.map(String::toLowerCase).filter(domain -> !domain.isEmpty()).collect(Collectors.toList());
 		try {
-			URL url = URI.create(urlString).toURL();
+			URI uri = URI.create(urlString);
+			if (!"https".equalsIgnoreCase(uri.getScheme()) && !"http".equalsIgnoreCase(uri.getScheme())) {
+				throw new IllegalArgumentException("Only HTTP(S) redirect URLs are allowed");
+			}
+			URL url = uri.toURL();
 			final String host = url.getHost();
+			if (host == null || host.isEmpty()) {
+				throw new IllegalArgumentException("Redirect URL must contain a host");
+			}
 			final InternetDomainName domainName = InternetDomainName.from(host).topPrivateDomain();
 			if (!domainList.contains(domainName.toString())) {
 				throw new IllegalArgumentException("You are not allowed to make requests to the URL: " + urlString);

@@ -229,6 +229,8 @@ public class AnthropicEndpoints {
 				insight = new Insight();
 				insight.setInsightId(insightId);
 				InsightStore.getInstance().put(insight);
+			} else if (!ModelPixelExecutor.userCanAccessInsight(user, session, insight)) {
+				return ModelPixelExecutor.errorResponse(403, "User does not have access to this insight");
 			}
 		}
 		insight.setUser(user);
